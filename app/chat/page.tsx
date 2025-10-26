@@ -1,10 +1,24 @@
 'use client'
 
 import { useState } from 'react'
-import cn from '@/lib/cn'
 
 export default function ChatPage() {
   const [chatOutput, setChatOutput] = useState<string>('')
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+
+    const formData = new FormData(e.target as HTMLFormElement)
+    const input = formData.get('input') as string
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ messages: input.trim() }),
+    })
+
+    const data = await response.json()
+    setChatOutput(data.response.kwargs.content)
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black p-4">
@@ -25,6 +39,23 @@ export default function ChatPage() {
               </div>
             )}
           </div>
+        </div>
+
+        <div className="mt-4">
+          <form onSubmit={handleSubmit}>
+            <input
+              type="text"
+              name="input"
+              placeholder="请输入您的问题"
+              className="w-full p-2 border border-zinc-300 dark:border-zinc-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+            />
+            <button
+              type="submit"
+              className="cursor-pointer mt-2 w-full p-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-gray-500 dark:focus:ring-gray-400"
+            >
+              发送
+            </button>
+          </form>
         </div>
       </div>
     </div>
