@@ -14,6 +14,7 @@ export const model = new ChatOpenAI({
     baseURL: getModelApiBase(),
   },
   modelName: 'deepseek-chat', // 或根据 DeepSeek 文档确认具体模型名
+  streaming: true,
   temperature: 0.3,
 })
 

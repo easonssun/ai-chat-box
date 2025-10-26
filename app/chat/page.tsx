@@ -4,6 +4,7 @@ import { useState } from 'react'
 
 export default function ChatPage() {
   const [chatOutput, setChatOutput] = useState<string>('')
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -13,11 +14,24 @@ export default function ChatPage() {
 
     const response = await fetch('/api/chat', {
       method: 'POST',
-      body: JSON.stringify({ messages: input.trim() }),
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ input: input.trim() }),
     })
+    if (!response.body) {
+      throw new Error('ReadableStream not supported in this browser.')
+    }
 
-    const data = await response.json()
-    setChatOutput(data.response.kwargs.content)
+    const reader = response.body.getReader()
+    const decoder = new TextDecoder()
+
+    // 流式读取
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      const chunk = decoder.decode(value, { stream: true })
+      setChatOutput((prev) => prev + chunk)
+    }
+    setIsLoading(false)
   }
 
   return (
@@ -32,7 +46,10 @@ export default function ChatPage() {
 
           <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 min-h-[400px] bg-zinc-50 dark:bg-zinc-800">
             {chatOutput ? (
-              <div className="whitespace-pre-wrap text-zinc-800 dark:text-zinc-200">{chatOutput}</div>
+              <div className="whitespace-pre-wrap text-zinc-800 dark:text-zinc-200">
+                {chatOutput}
+                {isLoading && '...'}
+              </div>
             ) : (
               <div className="flex items-center justify-center h-full text-zinc-500 dark:text-zinc-400">
                 <p>AI 输出内容将显示在这里...</p>
