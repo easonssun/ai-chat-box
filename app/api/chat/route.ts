@@ -1,4 +1,4 @@
-import { chain } from '@/llm/model'
+import { chainWithHistory, sessionId } from '@/llm/model'
 import { NextResponse } from 'next/server'
 
 export async function POST(req: Request, res: Response) {
@@ -30,10 +30,13 @@ export async function POST(req: Request, res: Response) {
         }
 
         // 调用模型并传入回调
-        await chain.invoke(
+        await chainWithHistory.invoke(
           { question: input },
           {
             callbacks: [callback],
+            configurable: {
+              sessionId,
+            },
           }
         )
       },
