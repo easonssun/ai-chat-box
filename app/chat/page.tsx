@@ -7,7 +7,7 @@ import cn from '@/lib/cn'
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<MessageBoxProps[]>([])
-  const [isLoading, setIsLoading] = useState(false)
+  const [inputDisabled, setInputDisabled] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -37,7 +37,7 @@ export default function ChatPage() {
     const input = inputValue.trim()
     setInputValue('')
     setMessages((prev) => [...prev, { content: input, type: 'user' }])
-    setIsLoading(true)
+    setInputDisabled(true)
 
     const response = await fetch('/api/chat', {
       method: 'POST',
@@ -45,6 +45,7 @@ export default function ChatPage() {
       body: JSON.stringify({ input }),
     }).catch((error) => {
       console.error('Fetch error:', error)
+      setInputDisabled(false)
       setMessages((prev) => [...prev, { content: '服务器错误，请稍后重试', type: 'bot', status: 'error' }])
       throw error
     })
@@ -88,7 +89,7 @@ export default function ChatPage() {
     } catch (e) {
       console.error('Stream error:', e)
     } finally {
-      setIsLoading(false)
+      setInputDisabled(false)
     }
   }
 
@@ -234,7 +235,7 @@ export default function ChatPage() {
                 rows={1}
                 className="w-full p-3 text-slate-800 dark:text-slate-200 resize-none overflow-hidden max-h-32 focus:outline-none"
                 autoComplete="off"
-                disabled={isLoading}
+                disabled={inputDisabled}
               />
               <div className="p-3 flex items-right justify-end gap-4">
                 <div>
@@ -253,7 +254,7 @@ export default function ChatPage() {
                     />
                   </svg>
                 </div>
-                <button type="submit" disabled={isLoading || !inputValue.trim()} className="cursor-pointer">
+                <button type="submit" disabled={inputDisabled || !inputValue.trim()} className="cursor-pointer">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
                   </svg>
