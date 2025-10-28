@@ -1,15 +1,16 @@
-import Markdown from "react-markdown"
+import Markdown from 'react-markdown'
 
 export type MessageBoxProps = {
   content: string
   type: 'bot' | 'user'
+  status?: 'loading' | 'done' | 'error'
 }
 
-export function BotMessage({ content, loading }: MessageBoxProps & { loading: boolean }) {
+export function BotMessage({ content, status }: MessageBoxProps) {
   return (
     <div className="flex items-start justify-start w-full mb-4">
-      <div className="flex-shrink-0 mr-3">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+      <div className="shrink-0 mr-3">
+        <div className="w-8 h-8 rounded-full bg-linear-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path
               strokeLinecap="round"
@@ -22,13 +23,14 @@ export function BotMessage({ content, loading }: MessageBoxProps & { loading: bo
       </div>
       <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3 rounded-2xl shadow-sm max-w-[80%]">
         <Markdown>{content}</Markdown>
-        {loading && (
+        {status === 'loading' && (
           <div className="flex space-x-1 mt-1">
             <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"></div>
             <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
             <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
           </div>
         )}
+        {status === 'error' && <div className="text-red-500 text-sm mt-1">Oops! Something went wrong. Please try again.</div>}
       </div>
     </div>
   )
@@ -37,10 +39,10 @@ export function BotMessage({ content, loading }: MessageBoxProps & { loading: bo
 export function UserMessage({ content }: MessageBoxProps) {
   return (
     <div className="flex items-start justify-end w-full mb-4">
-      <div className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-2xl shadow-sm max-w-[80%]">
+      <div className="bg-linear-to-r from-blue-500 to-indigo-600 text-white p-3 rounded-2xl shadow-sm max-w-[80%]">
         <div className="whitespace-pre-wrap">{content}</div>
       </div>
-      <div className="flex-shrink-0 ml-3">
+      <div className="shrink-0 ml-3">
         <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center">
           <svg
             xmlns="http://www.w3.org/2000/svg"

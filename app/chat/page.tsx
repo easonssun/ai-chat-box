@@ -43,8 +43,11 @@ export default function ChatPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ input }),
+    }).catch((error) => {
+      console.error('Fetch error:', error)
+      setMessages((prev) => [...prev, { content: '服务器错误，请稍后重试', type: 'bot', status: 'error' }])
+      throw error
     })
-
 
     if (!response.ok || !response.body) {
       throw new Error('ReadableStream not supported in this browser.')
@@ -53,7 +56,7 @@ export default function ChatPage() {
     const reader = response.body.getReader()
     const decoder = new TextDecoder()
     let botMessage = ''
-    setMessages((prev) => [...prev, { content: botMessage, type: 'bot' }])
+    setMessages((prev) => [...prev, { content: botMessage, type: 'bot', status: 'loading' }])
 
     // 流式读取
     try {
@@ -68,10 +71,12 @@ export default function ChatPage() {
             const data = JSON.parse(dataStr)
             if (data.type === 'token') {
               botMessage += data.content
-              setMessages((prev) => [...prev.slice(0, -1), { content: botMessage, type: 'bot' }])
+              setMessages((prev) => [...prev.slice(0, -1), { content: botMessage, type: 'bot', status: 'loading' }])
             } else if (data.type === 'done') {
+              setMessages((prev) => [...prev.slice(0, -1), { content: botMessage, type: 'bot', status: 'done' }])
               console.log('Stream done')
             } else if (data.type === 'error') {
+              setMessages((prev) => [...prev.slice(0, -1), { content: botMessage, type: 'bot', status: 'error' }])
               console.error('Stream error:', data.content)
               break
             }
@@ -96,17 +101,15 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 font-sans">
+    <div className="flex min-h-screen flex-col bg-linear-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 font-sans">
       {/* 顶部导航栏 */}
       <header className="sticky top-0 z-10 w-full border-b border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-linear-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
               <span className="text-white font-bold text-sm">江</span>
             </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              江河水利智能客服
-            </h1>
+            <h1 className="text-xl font-bold bg-linear-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">江河水利智能客服</h1>
           </div>
           <div className="flex items-center space-x-2">
             <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -146,7 +149,7 @@ export default function ChatPage() {
         {/* 欢迎信息 */}
         {messages.length === 0 && (
           <div className="text-center mb-8 mt-10">
-            <div className="mx-auto w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center mb-4">
+            <div className="mx-auto w-16 h-16 rounded-full bg-linear-to-r from-blue-500 to-indigo-600 flex items-center justify-center mb-4">
               <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path
                   strokeLinecap="round"
@@ -174,9 +177,9 @@ export default function ChatPage() {
               <div className="space-y-4">
                 {messages.map((msg, index) =>
                   msg.type === 'bot' ? (
-                    <BotMessage key={index} type={msg.type} content={msg.content} loading={isLoading} />
+                    <BotMessage key={index} type={msg.type} content={msg.content} status={msg.status} />
                   ) : (
-                    <UserMessage key={index} type={msg.type} content={msg.content} />
+                    <UserMessage key={index} type={msg.type} content={msg.content} status={msg.status} />
                   )
                 )}
                 <div ref={messagesEndRef} />
