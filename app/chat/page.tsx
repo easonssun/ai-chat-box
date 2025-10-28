@@ -1,13 +1,17 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, KeyboardEvent } from 'react'
 import type { MessageBoxProps } from './components/MessageBox'
 import { BotMessage, UserMessage } from './components/MessageBox'
+import cn from '@/lib/cn'
 
 export default function ChatPage() {
   const [messages, setMessages] = useState<MessageBoxProps[]>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [inputValue, setInputValue] = useState('')
+  const [isFocused, setIsFocused] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -17,23 +21,30 @@ export default function ChatPage() {
     scrollToBottom()
   }, [messages])
 
+  // 自动调整 textarea 高度
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`
+    }
+  }, [inputValue])
+
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
 
-    const formData = new FormData(e.target as HTMLFormElement)
-    const input = formData.get('input') as string
+    if (!inputValue.trim()) return
 
-    if (!input.trim()) return
+    const input = inputValue.trim()
+    setInputValue('')
+    setMessages((prev) => [...prev, { content: input, type: 'user' }])
+    setIsLoading(true)
 
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ input: input.trim() }),
+      body: JSON.stringify({ input }),
     })
 
-    setMessages((prev) => [...prev, { content: input, type: 'user' }])
-    setIsLoading(true)
-    ;(e.target as HTMLFormElement).reset()
 
     if (!response.ok || !response.body) {
       throw new Error('ReadableStream not supported in this browser.')
@@ -76,6 +87,14 @@ export default function ChatPage() {
     }
   }
 
+  const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      setIsFocused(false)
+      handleSubmit(e as unknown as React.FormEvent<HTMLFormElement>)
+    }
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 font-sans">
       {/* 顶部导航栏 */}
@@ -85,7 +104,9 @@ export default function ChatPage() {
             <div className="w-8 h-8 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 flex items-center justify-center">
               <span className="text-white font-bold text-sm">江</span>
             </div>
-            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">江河水利智能客服</h1>
+            <h1 className="text-xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              江河水利智能客服
+            </h1>
           </div>
           <div className="flex items-center space-x-2">
             <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
@@ -148,7 +169,7 @@ export default function ChatPage() {
             <h2 className="text-lg font-semibold text-slate-800 dark:text-slate-100">对话记录</h2>
           </div>
 
-          <div className="h-[500px] overflow-y-auto p-4 bg-slate-50 dark:bg-slate-900/50">
+          <div className="h-[500px] overflow-y-auto p-4 bg-slate-50 dark:bg-slate-900/50 chat-messages">
             {messages.length > 0 ? (
               <div className="space-y-4">
                 {messages.map((msg, index) =>
@@ -158,17 +179,6 @@ export default function ChatPage() {
                     <UserMessage key={index} type={msg.type} content={msg.content} />
                   )
                 )}
-                {/* {isLoading && (
-                  <div className="flex items-center justify-start w-full mb-2">
-                    <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3 rounded-2xl shadow-sm max-w-[80%]">
-                      <div className="flex space-x-1">
-                        <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"></div>
-                        <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                        <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" style={{ animationDelay: '0.4s' }}></div>
-                      </div>
-                    </div>
-                  </div>
-                )} */}
                 <div ref={messagesEndRef} />
               </div>
             ) : (
@@ -201,46 +211,54 @@ export default function ChatPage() {
       {/* 底部输入区域 */}
       <footer className="sticky bottom-0 w-full border-t border-slate-200 dark:border-slate-700 bg-white/80 dark:bg-slate-900/80 backdrop-blur-lg">
         <div className="container mx-auto px-4 py-4 max-w-4xl">
-          <form onSubmit={handleSubmit} className="flex space-x-2">
+          <form
+            onSubmit={handleSubmit}
+            className={cn(
+              'flex space-x-2 rounded-2xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none  shadow-sm resize-none',
+              { 'ring-2 ring-blue-500 dark:ring-blue-400': isFocused }
+            )}
+          >
             <div className="flex-1 relative">
-              <input
-                type="text"
+              <textarea
+                ref={textareaRef}
                 name="input"
+                value={inputValue}
+                onFocus={() => setIsFocused(true)}
+                onBlur={() => setIsFocused(false)}
+                onChange={(e) => setInputValue(e.target.value)}
+                onKeyDown={handleKeyDown}
                 placeholder="输入您的问题..."
-                className="w-full p-3 pr-12 rounded-full border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 text-slate-800 dark:text-slate-200 shadow-sm"
+                rows={1}
+                className="w-full p-3 text-slate-800 dark:text-slate-200 resize-none overflow-hidden max-h-32 focus:outline-none"
                 autoComplete="off"
                 disabled={isLoading}
               />
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="h-5 w-5 text-slate-400"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
-                  />
-                </svg>
+              <div className="p-3 flex items-right justify-end gap-4">
+                <div>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5 text-slate-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"
+                    />
+                  </svg>
+                </div>
+                <button type="submit" disabled={isLoading || !inputValue.trim()} className="cursor-pointer">
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
+                  </svg>
+                </button>
               </div>
             </div>
-            <button
-              type="submit"
-              disabled={isLoading}
-              className="p-3 rounded-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-600 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-md hover:shadow-lg"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.429A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" />
-              </svg>
-            </button>
           </form>
-          <div className="mt-2 text-xs text-center text-slate-500 dark:text-slate-400">
-            江河客服可能会产生不准确的信息，请仔细核查其回答
-          </div>
+          <div className="mt-2 text-xs text-center text-slate-500 dark:text-slate-400">按 Enter 发送，Shift+Enter 换行</div>
         </div>
       </footer>
     </div>
