@@ -67,11 +67,11 @@ export default function ChatPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-zinc-50 font-sans dark:bg-black p-4">
       <div className="w-full max-w-4xl">
-        <h1 className="text-3xl font-bold text-center mb-8 text-zinc-900 dark:text-zinc-100">AI 输出展示</h1>
+        <h1 className="text-3xl font-bold text-center mb-8 text-zinc-900 dark:text-zinc-100">江河客服</h1>
 
         <div className="bg-white dark:bg-zinc-900 rounded-lg shadow-lg p-6">
           <div className="mb-4">
-            <h2 className="text-xl font-semibold mb-2 text-zinc-800 dark:text-zinc-200">AI 输出内容</h2>
+            <h2 className="text-xl font-semibold mb-2 text-zinc-800 dark:text-zinc-200">客服回复</h2>
           </div>
 
           <div className="border border-zinc-200 dark:border-zinc-700 rounded-lg p-4 min-h-[400px] bg-zinc-50 dark:bg-zinc-800">
@@ -101,6 +101,7 @@ export default function ChatPage() {
               name="input"
               placeholder="请输入您的问题"
               className="w-full p-2 border border-zinc-300 dark:border-zinc-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
+              autoComplete="off"
             />
             <button
               type="submit"
