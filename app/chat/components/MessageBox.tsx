@@ -1,3 +1,5 @@
+import Markdown from "react-markdown"
+
 export type MessageBoxProps = {
   content: string
   type: 'bot' | 'user'
@@ -19,7 +21,7 @@ export function BotMessage({ content, loading }: MessageBoxProps & { loading: bo
         </div>
       </div>
       <div className="bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3 rounded-2xl shadow-sm max-w-[80%]">
-        <div className="whitespace-pre-wrap">{content}</div>
+        <Markdown>{content}</Markdown>
         {loading && (
           <div className="flex space-x-1 mt-1">
             <div className="w-2 h-2 rounded-full bg-slate-400 animate-bounce"></div>
