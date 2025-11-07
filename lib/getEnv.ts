@@ -16,9 +16,9 @@ export const getModelApiBase = () => {
 }
 
 export const getServerUrl = () => {
-  const serverUrl = process.env.NEXT_PUBLIC_API_URL
+  const serverUrl = process.env.NEXT_PUBLIC_API_BASE
   if (!serverUrl) {
-    throw new Error('NEXT_PUBLIC_API_URL is not set')
+    throw new Error('NEXT_PUBLIC_API_BASE is not set')
   }
   return serverUrl
 }
