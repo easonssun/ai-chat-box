@@ -1,18 +1,48 @@
 'use client'
 
-import { useState, useRef, useEffect, KeyboardEvent } from 'react'
+import { use, useState, useRef, useEffect, KeyboardEvent } from 'react'
 import type { MessageBoxProps } from './components/MessageBox'
 import { BotMessage, UserMessage } from './components/MessageBox'
 import cn from '@/lib/cn'
 import { getServerUrl } from '@/lib/getEnv'
+import { useSearchParams, useRouter } from 'next/navigation'
+
+async function getSessionId() {
+  const response = await fetch(getServerUrl() + 'api/session_id')
+
+  if (!response.ok || !response.body) {
+    throw new Error('ReadableStream not supported in this browser.')
+  }
+
+  const sessionId = await response.json()
+  return sessionId
+}
 
 export default function ChatPage() {
+  const searchParams = useSearchParams()
+  const router = useRouter()
+
+  const sessionId = searchParams.get('sessionId')
+
   const [messages, setMessages] = useState<MessageBoxProps[]>([])
   const [inputDisabled, setInputDisabled] = useState(false)
   const [inputValue, setInputValue] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+  // 设置 query 参数
+  const setSessionId = (id: string) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('sessionId', id)
+    router.replace(`/chat?${params.toString()}`)
+  }
+
+  // 初始化 sessionId
+  useEffect(() => {
+    if (sessionId) return
+    getSessionId().then(({ session_id }) => setSessionId(session_id))
+  }, [])
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -43,7 +73,7 @@ export default function ChatPage() {
     const response = await fetch(getServerUrl() + 'api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ input }),
+      body: JSON.stringify({ input, sessionId }),
     }).catch((error) => {
       console.error('Fetch error:', error)
       setInputDisabled(false)
