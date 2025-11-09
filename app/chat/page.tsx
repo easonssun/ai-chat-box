@@ -262,7 +262,7 @@ export default function ChatPage() {
                 onBlur={() => setIsFocused(false)}
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
-                placeholder="输入您的问题..."
+                placeholder="按 Enter 发送, Shift+Enter 换行"
                 rows={1}
                 className="w-full p-3 text-slate-800 dark:text-slate-200 resize-none overflow-hidden max-h-32 focus:outline-none"
                 autoComplete="off"
@@ -293,7 +293,7 @@ export default function ChatPage() {
               </div>
             </div>
           </form>
-          <div className="mt-2 text-xs text-center text-slate-500 dark:text-slate-400">按 Enter 发送，Shift+Enter 换行</div>
+          <div className="mt-2 text-xs text-center text-slate-500 dark:text-slate-400">内容由 ai 生成， 请仔细甄别</div>
         </div>
       </footer>
     </div>
